@@ -13,7 +13,10 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "CoupleSnap needs camera access to let you send photo messages."
+      }
     },
     "android": {
       "adaptiveIcon": {

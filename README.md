@@ -32,43 +32,61 @@ CoupleSnap is a photo-first messaging experience built exclusively for two peopl
 ### High-Level Architecture Diagram
 
 ```mermaid
-graph TD
+flowchart LR
+    %% Actors
     User((User))
     Partner((Partner))
 
-    subgraph "Client (React Native)"
-        UI[Screens & Components]
-        State[Zustand Store]
+    %% Client Side
+    subgraph Client ["📱 Client Device (React Native)"]
+        direction TB
+        UI[UI / Screens]
+        State[State Mgmt\n(Zustand)]
+        LocalDB[(AsyncStorage\nEncrypted)]
         Camera[Camera Module]
-        LocalStore[AsyncStorage / SecureStore]
     end
 
-    subgraph "Backend (Firebase)"
+    %% Backend Side
+    subgraph Cloud ["☁️ Firebase Cloud Backend"]
+        direction TB
         Auth[Authentication]
-        Firestore[Firestore Database]
-        Storage[Storage Buckets]
-        Functions[Cloud Functions]
+        Trigger[Cloud Functions]
         FCM[Cloud Messaging]
+        
+        subgraph Data ["Data Layer"]
+            Firestore[(Firestore\nNoSQL)]
+            Storage[(Storage\nMedia Buckets)]
+        end
     end
 
-    User -->|Interacts| UI
-    UI -->|Updates| State
-    UI -->|Captures| Camera
-    State <-->|Persists| LocalStore
+    %% Flows being distinct
+    User -->|1. Open App| UI
+    UI -->|2. Capture| Camera
+    Camera -->|3. Process| UI
+    UI <-->|4. Sync State| State
+    State <-->|5. Cache| LocalDB
 
-    UI <-->|Auth| Auth
-    UI <-->|Data Sync| Firestore
-    UI <-->|Upload/Download| Storage
-    
-    Functions -->|Triggers| FCM
-    FCM -->|Push Notification| Partner
-    Partner -->|Interacts| UI
+    %% Network Calls
+    UI <-->|6. Auth Token| Auth
+    UI -->|7. Upload Media| Storage
+    UI <-->|8. Sync Data| Firestore
 
-    classDef client fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
-    classDef server fill:#f3e5f5,stroke:#4a148c,stroke-width:2px;
-    
-    class UI,State,Camera,LocalStore client;
-    class Auth,Firestore,Storage,Functions,FCM server;
+    %% Async & Notification Flow
+    Firestore -.->|9. Trigger| Trigger
+    Trigger -.->|10. Push Notification| FCM
+    FCM -.->|11. Wake/Alert| Partner
+    Partner -->|12. View Content| UI
+
+    %% Styling to mimic clean technical diagrams
+    classDef actor fill:#333,stroke:#333,color:#fff;
+    classDef client fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+    classDef cloud fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,stroke-dasharray: 5 5;
+    classDef data fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+
+    class User,Partner actor;
+    class UI,State,Camera,LocalDB client;
+    class Auth,Trigger,FCM cloud;
+    class Firestore,Storage data;
 ```
 
 See `docs/System_Arch_.v1.md` for mode diagrams and `docs/couplesnap-tech-doc.md` for full system, data, and roadmap details.

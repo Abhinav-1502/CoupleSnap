@@ -29,6 +29,48 @@ CoupleSnap is a photo-first messaging experience built exclusively for two peopl
 - **Security:** End-to-end encryption using RSA key exchange + AES-256-GCM payloads, strict Firestore/Storage rules, device keychains, and certificate pinning.
 - **Monitoring:** Firebase Analytics, Crashlytics, perf traces, plus KPI dashboards targeting sub‑3s send flows and <0.5% crash rate.
 
+### High-Level Architecture Diagram
+
+```mermaid
+graph TD
+    User((User))
+    Partner((Partner))
+
+    subgraph "Client (React Native)"
+        UI[Screens & Components]
+        State[Zustand Store]
+        Camera[Camera Module]
+        LocalStore[AsyncStorage / SecureStore]
+    end
+
+    subgraph "Backend (Firebase)"
+        Auth[Authentication]
+        Firestore[Firestore Database]
+        Storage[Storage Buckets]
+        Functions[Cloud Functions]
+        FCM[Cloud Messaging]
+    end
+
+    User -->|Interacts| UI
+    UI -->|Updates| State
+    UI -->|Captures| Camera
+    State <-->|Persists| LocalStore
+
+    UI <-->|Auth| Auth
+    UI <-->|Data Sync| Firestore
+    UI <-->|Upload/Download| Storage
+    
+    Functions -->|Triggers| FCM
+    FCM -->|Push Notification| Partner
+    Partner -->|Interacts| UI
+
+    classDef client fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef server fill:#f3e5f5,stroke:#4a148c,stroke-width:2px;
+    
+    class UI,State,Camera,LocalStore client;
+    class Auth,Firestore,Storage,Functions,FCM server;
+```
+
 See `docs/System_Arch_.v1.md` for mode diagrams and `docs/couplesnap-tech-doc.md` for full system, data, and roadmap details.
 
 ---
